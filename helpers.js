@@ -1,8 +1,13 @@
 // Логируем события в отдельный (мой) чат
-function log(ctx, log_chat_id, text) {
+function log(ctx, text) {
   let chatName = ctx.chat.title;
-  ctx.telegram.sendMessage(log_chat_id, chatName + ': ' + text);
+  ctx.telegram.sendMessage(process.env.log_chat_id, "#" + chatName + '\n' + text, { parse_mode: 'HTML' });
 }
+
+function isAdmin(ctx) {
+   return ctx.from.id == process.env.admin_id;
+}
+
 
 // Вспомогательная функция для сортировки массива по одному свойству
 function compare(field, order) {
@@ -47,4 +52,4 @@ function compare(field, order) {
   };
 }
 
-module.exports = { compare, log }
+module.exports = { isAdmin, compare, log }
