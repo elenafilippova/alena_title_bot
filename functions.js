@@ -2,6 +2,8 @@ const fs = require('fs');
 const helpers = require('./helpers');
 let admins = []; // все админы чата
 const maxAdminsCount = 50;
+const maxAdminsCountForTesting = 3;
+let isTestMode = true;
 
 // Загружаем из чата актуальную информацию обо всех админах чата
 let loadChatAdmins = async (ctx) => {
@@ -58,13 +60,16 @@ let saveChatAdminsToFile = async (ctx) => {
 // Сохраняем пользователя, создавшего сообщение в users.json
 let saveMessagesUserToFile = async (ctx, user) => {
 
+  console.log("ctx.chat.id:" + ctx.chat.id)
+  isTestMode = ctx.chat.id == process.env.test_chat_id;
+
   let file_users = await getUsersFromFile(ctx.chat.id);
-  
+ 
   if (admins.length === 0) {
     await loadChatAdmins(ctx);
     saveAdminsToUsers(admins, file_users);
-  }
-
+  } 
+ 
   let file_user = await saveMessagesUserToUsers(file_users, user);
 
   if (!file_user.is_admin) {  
@@ -82,6 +87,7 @@ let saveMessagesUserToFile = async (ctx, user) => {
 async function getUsersFromFile(chat_id) {
 
   let obj = {
+    chat_name: "-",
     users: []
   };
 
@@ -160,7 +166,7 @@ function saveAdminsToUsers(admins_users, file_users) {
 async function saveMessagesUserToUsers(file_users, messagesUser) {
 
   let file_user;
-
+ 
   if (file_users.length > 0) {
     file_user = file_users.find(file_user => file_user.id === messagesUser.id);
   }
@@ -194,13 +200,18 @@ async function tryToMakeFictiveAdmin(ctx, file_users, file_user) {
     let log = "👑 #СтавимПодпись Пробуем сделать <b>"+ file_user.first_name + "</b> админом с подписью <b>'" + file_user.custom_title + "'</b>:";
     
     let updateResult = true;
+    console.log("isTestMode: "+ isTestMode);
+    let maxAdminsCountFact = isTestMode ? maxAdminsCountForTesting : maxAdminsCount;
     // если количество админов равно максимальному
-    if (maxAdminsCount === admins.length) {
+    if (admins.length === maxAdminsCountFact) {
       // то удаляем наименее активного админа чата и назначаем нашего нового
       // отбираем фиктивных админов, отсортированных по возрастанию количества сообщений в чате
       let fictive_admins = file_users.filter(user => user.is_admin === true && user.is_fictive === true).sort(helpers.compare('messages_count'));
-      console.log("fictive_admins:");
-      console.log(fictive_admins);
+      if (isTestMode) {
+        console.log("fictive_admins:");
+        console.log(fictive_admins);
+      }
+   
       // отбираем самого "слабака" (первый в списке фиктивных)
       let weak_admin = fictive_admins !== undefined && fictive_admins.length > 0 ? fictive_admins[0] : null;      
       // console.log("weak_admin: ");
@@ -234,8 +245,11 @@ async function tryToMakeFictiveAdmin(ctx, file_users, file_user) {
         file_user.is_fictive = true; admins.push(file_user);
         log += "\n • Пользователь <b>"+ file_user.first_name + "</b> успешно назначен фиктивным админом ✅";
       }
-      console.log("ALL ADMINS: ");
-      console.log(admins);
+
+      if (isTestMode) {
+        console.log("ALL ADMINS: ");
+        console.log(admins);
+      }
     }
 
      helpers.log(ctx, log);
