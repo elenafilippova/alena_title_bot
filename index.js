@@ -5,6 +5,7 @@ const functions = require('./functions')
 const app = express();
 
 //'-1001888402362' - мой чат для Экспериментов
+//'-1001639207446' - чат Детки Осень 2022
 
 app.get('/', function(_request, response) {
   response.send(`Монитор активен. Локальный адрес: http://localhost:${process.env.port}`);

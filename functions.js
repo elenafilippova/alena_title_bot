@@ -13,7 +13,7 @@ let loadChatAdmins = async (ctx) => {
   let chatAdmins = await ctx.getChatAdministrators(ctx.chat.id);
   // формируем пользователей с данными для сохранения в файл
   chatAdmins.forEach(admin => {
-    let user = admin.user;
+    let user = admin.user;   
     // является ли админ фиктивным? (Нужен только для подписей в чате)
     let isFictiveAdmin =
       user.is_bot === false &&
@@ -60,7 +60,8 @@ let saveChatAdminsToFile = async (ctx) => {
 // Сохраняем пользователя, создавшего сообщение в users.json
 let saveMessagesUserToFile = async (ctx, user) => {
 
-  console.log("ctx.chat.id:" + ctx.chat.id)
+  //console.log(admins);
+  //console.log("ctx.chat.id:" + ctx.chat.id)
   isTestMode = ctx.chat.id == process.env.test_chat_id;
 
   let file_users = await getUsersFromFile(ctx.chat.id);
@@ -74,7 +75,7 @@ let saveMessagesUserToFile = async (ctx, user) => {
 
   if (!file_user.is_admin) {  
     if (file_user.custom_title.length === 0) {
-      let message = "⚠️ Внимание! У пользователя <b>" + file_user.first_name + "</b> не задана подпись!";
+      let message = "⚠️ #НужнаПодпись Внимание! У пользователя " + helpers.getUserDescription(file_user) + " не задана подпись!";
        helpers.log(ctx, message);
     }   
     await tryToMakeFictiveAdmin(ctx, file_users, file_user);
@@ -175,7 +176,7 @@ async function saveMessagesUserToUsers(file_users, messagesUser) {
     file_user = messagesUser;
     file_user.messages_count = 1;
     file_user.custom_title = "";
-    file_user.is_fictive = false;
+    file_user.is_fictive = true;
     file_users.push(file_user);
   } else {
     // обновляем данные существующего пользователя
@@ -197,7 +198,7 @@ async function tryToMakeFictiveAdmin(ctx, file_users, file_user) {
   
   if (file_user.custom_title.length > 0) {
 
-    let log = "👑 #СтавимПодпись Пробуем сделать <b>"+ file_user.first_name + "</b> админом с подписью <b>'" + file_user.custom_title + "'</b>:";
+    let log = "👑 #СтавимПодпись Пробуем сделать <b>" + helpers.getUserDescription(file_user) + "</b> админом с подписью <b>'" + file_user.custom_title + "'</b>:";
     
     let updateResult = true;
     console.log("isTestMode: "+ isTestMode);
@@ -218,7 +219,7 @@ async function tryToMakeFictiveAdmin(ctx, file_users, file_user) {
       // console.log(weak_admin);
       if (weak_admin !== null) {
 
-        log += "\n • Попытка №1 удаления фиктивного админа <b>" + weak_admin?.first_name + "</b>";
+        log += "\n • Попытка №1 удаления фиктивного админа <b>"  + helpers.getUserDescription(weak_admin) + "</b>";
         let updateResult = await updateRightsForUser(ctx, weak_admin.id, false, null);
         
         if (!updateResult) {// если присвоение привелегий обломилось, снова подгружаем данные по админам из чата (такое возможно, если кто-то "ручками" и без нашего бота правил админов в чате)

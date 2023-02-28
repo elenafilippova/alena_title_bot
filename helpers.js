@@ -4,10 +4,15 @@ function log(ctx, text) {
   ctx.telegram.sendMessage(process.env.log_chat_id, "#" + chatName + '\n' + text, { parse_mode: 'HTML' });
 }
 
+ // Проверяем, является ли отправитель сообщения админом чата
 function isAdmin(ctx) {
    return ctx.from.id == process.env.admin_id;
 }
 
+// Возвращаем описание пользователя (для логов)
+function getUserDescription(user) {
+   return `<b> ${user?.first_name ?? "пользователь не определен"} ${user?.last_name} (${user?.id}) </b>`;
+}
 
 // Вспомогательная функция для сортировки массива по одному свойству
 function compare(field, order) {
@@ -52,4 +57,4 @@ function compare(field, order) {
   };
 }
 
-module.exports = { isAdmin, compare, log }
+module.exports = { isAdmin, compare, log, getUserDescription }
