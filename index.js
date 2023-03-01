@@ -22,7 +22,6 @@ bot.command('load_admins', async (ctx) => {
 
   if (isAdmin) { 
     await functions.loadChatAdmins(ctx);
-    await functions.saveChatAdminsToFile(ctx);
   }
  })
 

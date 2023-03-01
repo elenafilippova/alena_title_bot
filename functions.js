@@ -1,6 +1,5 @@
 const fs = require('fs');
 const helpers = require('./helpers');
-let admins = []; // все админы чата
 const maxAdminsCount = 50;
 const maxAdminsCountForTesting = 3;
 let isTestMode = true;
@@ -10,7 +9,7 @@ let loadChatAdmins = async (ctx) => {
 
   isTestMode = ctx.chat.id == process.env.test_chat_id;
 
-  admins = [];
+  let admins = [];
   // получаем список всех админов чата
   let chatAdmins = await ctx.getChatAdministrators(ctx.chat.id);
   // формируем пользователей с данными для сохранения в файл
@@ -48,36 +47,25 @@ let loadChatAdmins = async (ctx) => {
     console.log("admins:");
     console.log(admins);
   }
+
+  // Сохраняем данные об админах в users.json
+  let file_users = await getUsersFromFile(ctx.chat.id); 
+  saveAdminsToUsers(admins, file_users);
+  await saveUsersToFile(ctx, file_users);
 }
 
 // Определяем, является ли пользователь админом чата (любым)
-let isAdmin = (userId) => {
-  let result = admins.find(user => user.id === userId) !== undefined;
+let isAdmin = (file_users, userId) => {
+  let result = file_users.find(user => user.id === userId && user.is_admin === true) !== undefined;
   return result;
-}
-
-// Сохраняем данные об админах в users.json
-let saveChatAdminsToFile = async (ctx) => {
-
-  let file_users = await getUsersFromFile(ctx.chat.id);
-  saveAdminsToUsers(admins, file_users);
-  await saveUsersToFile(ctx, file_users);
 }
 
 // Сохраняем пользователя, создавшего сообщение в users.json
 let saveMessagesUserToFile = async (ctx, user) => {
 
-  //console.log(admins);
-  //console.log("ctx.chat.id:" + ctx.chat.id)
   isTestMode = ctx.chat.id == process.env.test_chat_id;
 
-  let file_users = await getUsersFromFile(ctx.chat.id);
- 
-  if (admins.length === 0) {
-    await loadChatAdmins(ctx);
-    saveAdminsToUsers(admins, file_users);
-  } 
- 
+  let file_users = await getUsersFromFile(ctx.chat.id);  
   let file_user = await saveMessagesUserToUsers(file_users, user);
 
   if (!file_user.is_admin) {  
@@ -99,7 +87,7 @@ async function getUsersFromFile(chat_id) {
     users: []
   };
 
-  let fileName = getFileName(chat_id);
+  let fileName = helpers.getFileName(chat_id);
 
   try {
     if (fs.existsSync(fileName)) {
@@ -116,8 +104,9 @@ async function getUsersFromFile(chat_id) {
   }
 }
 
-function getFileName(chat_id) {
-  return 'users_' + chat_id.toString() + '.json';
+// Из массива пользователей отделяем только админов
+function getAdminsFromUsers(file_users) {
+  return file_users.filter(file_user => file_user.is_admin === true);
 }
 
 // Сохраняем всех пользователей в файл users.json
@@ -135,7 +124,7 @@ async function saveUsersToFile(ctx, users) {
     obj.users = users;
 
     let json = JSON.stringify(obj);
-    fs.writeFile(getFileName(chat_id), json, function(err) {
+    fs.writeFile(helpers.getFileName(chat_id), json, function(err) {
       if (err) {
         helpers.log(ctx, err);
         return console.log(err);
@@ -192,18 +181,18 @@ async function saveMessagesUserToUsers(file_users, messagesUser) {
     file_user.messages_count = 1;
     file_user.custom_title = "";
     file_user.is_fictive = true;
+    file_user.is_admin = false;
     file_users.push(file_user);
   } else {
     // обновляем данные существующего пользователя
     file_user.first_name = messagesUser.first_name;
     file_user.last_name = messagesUser.last_name ?? "";
     file_user.username = messagesUser.username;
+    let is_admin = isAdmin(file_users, messagesUser.id);
+    file_user.is_admin = is_admin;
     //file_user.is_fictive = messagesUser.is_fictive;
     file_user.messages_count++;
   }
-
-  let is_admin = isAdmin(messagesUser.id);
-  file_user.is_admin = is_admin;
 
   return file_user;
 }
@@ -214,6 +203,8 @@ async function tryToMakeFictiveAdmin(ctx, file_users, file_user) {
   if (file_user.custom_title.length > 0) {
 
     let log = "👑 #СтавимПодпись Пробуем сделать <b>" + helpers.getUserDescription(file_user) + "</b> админом с подписью <b>'" + file_user.custom_title + "'</b>:";
+
+    let admins = getAdminsFromUsers(file_users);
     
     let updateResult = true;
     console.log("isTestMode: "+ isTestMode);
@@ -239,8 +230,7 @@ async function tryToMakeFictiveAdmin(ctx, file_users, file_user) {
         
         if (!updateResult) {// если присвоение привелегий обломилось, снова подгружаем данные по админам из чата (такое возможно, если кто-то "ручками" и без нашего бота правил админов в чате)
           await loadChatAdmins(ctx);
-          await saveChatAdminsToFile(ctx);
-        log += "\n • Попытка №2 удаления фиктивного админа <b>" + weak_admin?.first_name + "</b>";
+          log += "\n • Попытка №2 удаления фиктивного админа <b>" + weak_admin?.first_name + "</b>";
           updateResult = await updateRightsForUser(ctx, weak_admin.id, false, null);
         }
    
@@ -258,7 +248,8 @@ async function tryToMakeFictiveAdmin(ctx, file_users, file_user) {
 
       if (updateResult) {
         file_user.is_admin = true;
-        file_user.is_fictive = true; admins.push(file_user);
+        file_user.is_fictive = true; 
+        admins.push(file_user);
         log += "\n • Пользователь <b>"+ file_user.first_name + "</b> успешно назначен фиктивным админом ✅";
       }
 
@@ -308,4 +299,4 @@ let updateRightsForUser = async (ctx, userId, isAdmin, custom_title) => {
   return updateResult;
 }
 
-module.exports = { loadChatAdmins, saveChatAdminsToFile, saveMessagesUserToFile, updateRightsForUser, getUsersFromFile }
+module.exports = { loadChatAdmins, saveMessagesUserToFile, updateRightsForUser, getUsersFromFile }

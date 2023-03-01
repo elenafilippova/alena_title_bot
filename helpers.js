@@ -1,3 +1,7 @@
+function getFileName(chat_id) {
+  return 'users_' + chat_id.toString() + '.json';
+}
+
 // Логируем события в отдельный (мой) чат
 function log(ctx, text) {
   let chatName = ctx.chat.title;
@@ -57,4 +61,4 @@ function compare(field, order) {
   };
 }
 
-module.exports = { isAdmin, compare, log, getUserDescription }
+module.exports = { getFileName, isAdmin, compare, log, getUserDescription }
