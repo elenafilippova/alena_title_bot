@@ -1,7 +1,8 @@
 const { Telegraf } = require('telegraf');
 const helpers = require('./helpers');
 const express = require('express');
-const functions = require('./functions')
+const functions = require('./functions');
+const statistics = require('./statistics');
 const app = express();
 
 //'-1001888402362' - мой чат для Экспериментов
@@ -22,6 +23,42 @@ bot.command('load_admins', async (ctx) => {
   if (isAdmin) { 
     await functions.loadChatAdmins(ctx);
     await functions.saveChatAdminsToFile(ctx);
+  }
+ })
+
+bot.command('get_statistics', async (ctx) => {
+
+  let isAdmin = helpers.isAdmin(ctx); 
+
+  if (isAdmin) { 
+    await statistics.getUsersStatistics(ctx);
+  }
+ })
+
+bot.command('real_admins', async (ctx) => {
+
+  let isAdmin = helpers.isAdmin(ctx); 
+
+  if (isAdmin) { 
+    await statistics.getRealAdmins(ctx);
+  }
+ })
+
+bot.command('fictive_admins', async (ctx) => {
+
+  let isAdmin = helpers.isAdmin(ctx); 
+
+  if (isAdmin) { 
+    await statistics.getFictiveAdmins(ctx);
+  }
+ })
+
+bot.command('users_without_title', async (ctx) => {
+
+  let isAdmin = helpers.isAdmin(ctx); 
+
+  if (isAdmin) { 
+    await statistics.getUsersWithoutTitle(ctx);
   }
  })
 

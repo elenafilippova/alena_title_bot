@@ -8,6 +8,8 @@ let isTestMode = true;
 // Загружаем из чата актуальную информацию обо всех админах чата
 let loadChatAdmins = async (ctx) => {
 
+  isTestMode = ctx.chat.id == process.env.test_chat_id;
+
   admins = [];
   // получаем список всех админов чата
   let chatAdmins = await ctx.getChatAdministrators(ctx.chat.id);
@@ -41,6 +43,11 @@ let loadChatAdmins = async (ctx) => {
   });
 
   helpers.log(ctx, "🔥 Получен список админов чата. Всего админов: " + admins.length);
+
+  if (isTestMode) {
+    console.log("admins:");
+    console.log(admins);
+  }
 }
 
 // Определяем, является ли пользователь админом чата (любым)
@@ -161,6 +168,14 @@ function saveAdminsToUsers(admins_users, file_users) {
       file_user.custom_title = admin_user.custom_title;
     }
   });
+
+  // всем остальным пользователям файлика проставляем is_admin = false. Такие ситуации бывают, когда в чате ручками кто-то удалил админа, и в файлике это никак не зафиксировалось. Надо и в файлике убрать признак того, что человек - админ.
+    file_users.forEach(file_user => {
+      let admin_user = admins_users.find(admin_user => admin_user.id === file_user.id);
+      if (admin_user === undefined) {
+        file_user.is_admin = false;
+    } 
+  });
 }
 
 // Сохраняем данные о пользователе, написавшем сообщение, в массив users 
@@ -204,7 +219,7 @@ async function tryToMakeFictiveAdmin(ctx, file_users, file_user) {
     console.log("isTestMode: "+ isTestMode);
     let maxAdminsCountFact = isTestMode ? maxAdminsCountForTesting : maxAdminsCount;
     // если количество админов равно максимальному
-    if (admins.length === maxAdminsCountFact) {
+    if (admins.length >= maxAdminsCountFact) {
       // то удаляем наименее активного админа чата и назначаем нашего нового
       // отбираем фиктивных админов, отсортированных по возрастанию количества сообщений в чате
       let fictive_admins = file_users.filter(user => user.is_admin === true && user.is_fictive === true).sort(helpers.compare('messages_count'));
@@ -247,6 +262,8 @@ async function tryToMakeFictiveAdmin(ctx, file_users, file_user) {
         log += "\n • Пользователь <b>"+ file_user.first_name + "</b> успешно назначен фиктивным админом ✅";
       }
 
+      log += "\n • Всего администраторов: <b>"+ admins.length + "</b>";
+
       if (isTestMode) {
         console.log("ALL ADMINS: ");
         console.log(admins);
@@ -272,7 +289,7 @@ let updateRightsForUser = async (ctx, userId, isAdmin, custom_title) => {
         can_invite_users: true
       });
      
-        let title_result = await ctx.telegram.setChatAdministratorCustomTitle(chatId, userId, custom_title);
+        let title_result = await ctx.telegram.setChatAdministratorCustomTitle(chatId, userId, custom_title.substring(0,16));
         console.log ("Результат установки подписи: "+ title_result);
         console.log("promote is ok");
     } else {
@@ -291,4 +308,4 @@ let updateRightsForUser = async (ctx, userId, isAdmin, custom_title) => {
   return updateResult;
 }
 
-module.exports = { loadChatAdmins, saveChatAdminsToFile, saveMessagesUserToFile, updateRightsForUser }
+module.exports = { loadChatAdmins, saveChatAdminsToFile, saveMessagesUserToFile, updateRightsForUser, getUsersFromFile }
