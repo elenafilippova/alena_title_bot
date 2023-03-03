@@ -5,13 +5,14 @@ const maxAdminsCountForTesting = 3;
 let isTestMode = true;
 
 // Загружаем из чата актуальную информацию обо всех админах чата
-let loadChatAdmins = async (ctx) => {
+let loadChatAdmins = async (bot, chat_id, chat_title) => {
 
-  isTestMode = ctx.chat.id == process.env.test_chat_id;
+  isTestMode = chat_id == process.env.test_chat_id;
 
   let admins = [];
   // получаем список всех админов чата
-  let chatAdmins = await ctx.getChatAdministrators(ctx.chat.id);
+  
+  let chatAdmins = await bot.telegram.getChatAdministrators(chat_id);
   // формируем пользователей с данными для сохранения в файл
   chatAdmins.forEach(admin => {
     let user = admin.user;   
@@ -41,7 +42,7 @@ let loadChatAdmins = async (ctx) => {
     });
   });
 
-  helpers.log(ctx, "🔥 Получен список админов чата. Всего админов: " + admins.length);
+  helpers.log2(bot, chat_title, "🔥 Получен список админов чата. Всего админов: " + admins.length);
 
   if (isTestMode) {
     console.log("admins:");
@@ -49,9 +50,9 @@ let loadChatAdmins = async (ctx) => {
   }
 
   // Сохраняем данные об админах в users.json
-  let file_users = await getUsersFromFile(ctx.chat.id); 
+  let file_users = await getUsersFromFile(chat_id); 
   saveAdminsToUsers(admins, file_users);
-  await saveUsersToFile(ctx, file_users);
+  await saveUsersToFile(bot, chat_id, chat_title, file_users);
 }
 
 // Определяем, является ли пользователь админом чата (любым)
@@ -61,7 +62,7 @@ let isAdmin = (file_users, userId) => {
 }
 
 // Сохраняем пользователя, создавшего сообщение в users.json
-let saveMessagesUserToFile = async (ctx, user) => {
+let saveMessagesUserToFile = async (ctx, bot, user) => {
 
   isTestMode = ctx.chat.id == process.env.test_chat_id;
 
@@ -76,7 +77,7 @@ let saveMessagesUserToFile = async (ctx, user) => {
     await tryToMakeFictiveAdmin(ctx, file_users, file_user);
   }
 
-  await saveUsersToFile(ctx, file_users);
+  await saveUsersToFile(bot, ctx.chat.id, ctx.chat.title, file_users);
 }
 
 // Получаем всех пользователей из файла users.json
@@ -110,12 +111,12 @@ function getAdminsFromUsers(file_users) {
 }
 
 // Сохраняем всех пользователей в файл users.json
-async function saveUsersToFile(ctx, users) {
+async function saveUsersToFile(bot, chat_id, chat_title, users) {
 
-  let chat_id = ctx.chat.id;
+  //let chat_id = ctx.chat.id;
   
   let obj = {
-    chat_name: ctx.chat.title,
+    chat_name: chat_title,
     users: []
   };
 
@@ -126,7 +127,7 @@ async function saveUsersToFile(ctx, users) {
     let json = JSON.stringify(obj);
     fs.writeFile(helpers.getFileName(chat_id), json, function(err) {
       if (err) {
-        helpers.log(ctx, err);
+        helpers.log2(bot, chat_title, err);
         return console.log(err);
       }
     });

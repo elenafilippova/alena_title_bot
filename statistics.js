@@ -2,9 +2,9 @@ const functions = require('./functions');
 const helpers = require('./helpers');
 
 // Получаем всю основную статистику по пользакам
-async function getUsersStatistics(ctx) {
+async function getUsersStatistics(chatId) {
 
-  let file_users = await functions.getUsersFromFile(ctx.chat.id);
+  let file_users = await functions.getUsersFromFile(chatId);
 
   let statistics_text = "#Статистика Данные по пользователям из файла users: \n";
 
@@ -19,13 +19,13 @@ async function getUsersStatistics(ctx) {
   let users_without_title = file_users.filter(file_user => file_user.custom_title === "") ?? [];
   statistics_text += ` \n • Не заданы подписи у <b>${users_without_title.length}</b> пользователей`;
 
-   helpers.log(ctx, statistics_text);
+   return statistics_text;
 }
 
-// Получаем всю основную статистику по пользакам
-async function getRealAdmins(ctx) {
+// Получаем 
+async function getRealAdmins(chatId) {
 
-  let file_users = await functions.getUsersFromFile(ctx.chat.id);
+  let file_users = await functions.getUsersFromFile(chatId);
 
   let statistics_text = "#Статистика Данные по пользователям из файла users: \n";
 
@@ -34,13 +34,13 @@ async function getRealAdmins(ctx) {
   //console.log(admins);
     statistics_text += ` \n • Настоящие администраторы чата: \n ${names} \n(всего ${real_admins.length})`;
 
-   helpers.log(ctx, statistics_text);
+   return statistics_text;
 }
 
-// Получаем всю основную статистику по пользакам
-async function getFictiveAdmins(ctx) {
+// Получаем 
+async function getFictiveAdmins(chatId) {
 
-  let file_users = await functions.getUsersFromFile(ctx.chat.id);
+  let file_users = await functions.getUsersFromFile(chatId);
 
   let statistics_text = "#Статистика Данные по пользователям из файла users: \n";
 
@@ -49,13 +49,13 @@ async function getFictiveAdmins(ctx) {
   //console.log(admins);
     statistics_text += ` \n • Фиктивные администраторы чата: \n${names} \n(всего ${fictive_admins.length})`;
 
-   helpers.log(ctx, statistics_text);
+   return statistics_text;
 }
 
-// Получаем всю основную статистику по пользакам
-async function getUsersWithoutTitle(ctx) {
+// Получаем 
+async function getUsersWithoutTitle(chatId) {
 
-  let file_users = await functions.getUsersFromFile(ctx.chat.id);
+  let file_users = await functions.getUsersFromFile(chatId);
 
   let statistics_text = "#Статистика Данные по пользователям из файла users: \n";
 
@@ -64,7 +64,7 @@ async function getUsersWithoutTitle(ctx) {
   //console.log(admins);
     statistics_text += ` \n • Пользователи чата без подписи: \n${names} \n(всего ${users_without_title.length})`;
 
-   helpers.log(ctx, statistics_text);
+  return statistics_text;
 }
 
 module.exports = { getUsersStatistics, getRealAdmins, getFictiveAdmins, getUsersWithoutTitle }

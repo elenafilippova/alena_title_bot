@@ -8,9 +8,16 @@ function log(ctx, text) {
   ctx.telegram.sendMessage(process.env.log_chat_id, "#" + chatName + '\n' + text, { parse_mode: 'HTML' });
 }
 
+// Логируем события в отдельный (мой) чат
+function log2(bot, chatName, text, chat_id = process.env.log_chat_id) {
+  bot.telegram.sendMessage(chat_id, "#" + chatName + '\n' + text, { parse_mode: 'HTML' });
+}
+
+
  // Проверяем, является ли отправитель сообщения админом чата
 function isAdmin(ctx) {
-   return ctx.from.id == process.env.admin_id;
+  let admins_ids = process.env.admins_ids.toString().split(',');
+  return admins_ids.includes(ctx.from.id.toString());
 }
 
 // Возвращаем описание пользователя (для логов)
@@ -61,4 +68,4 @@ function compare(field, order) {
   };
 }
 
-module.exports = { getFileName, isAdmin, compare, log, getUserDescription }
+module.exports = { getFileName, isAdmin, compare, log, log2, getUserDescription }
