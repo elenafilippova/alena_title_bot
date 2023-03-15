@@ -8,7 +8,7 @@ function log(ctx, text) {
   ctx.telegram.sendMessage(process.env.log_chat_id, "#" + chatName + '\n' + text, { parse_mode: 'HTML' });
 }
 
-// Логируем события в отдельный (мой) чат
+// Логируем события в отдельный чат по заданному chat_id
 function log2(bot, chatName, text, chat_id = process.env.log_chat_id) {
   bot.telegram.sendMessage(chat_id, "#" + chatName + '\n' + text, { parse_mode: 'HTML' });
 }

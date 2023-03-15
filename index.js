@@ -17,16 +17,16 @@ app.listen(process.env.port, () => console.log());
 const bot = new Telegraf(process.env.token);
 bot.launch();
 
+bot.command('start', (ctx) => {
+  bot.telegram.sendMessage(ctx.chat.id, 'Приветствую! Я написан для маленького чата в Телеграмме, по ряду причин у меня отключены функции для работы с любыми другими чатами Телеграмм. При необходимости меня можно немного доработать, и я стану универсальным и управляемым. По данному вопросу можно обратиться к моему создателю: https://t.me/elena_alena . ', {
+  }) 
+})
 //-------------------------------------------------------------------------
 bot.command('admin', (ctx) => {
 
   let isAdmin = helpers.isAdmin(ctx); 
  
   if (isAdmin) { 
-    //let params = ctx.update.message.text.split(' ');
-    //let chat_id = params[1] ?? ctx.chat.id;
-    //console.log(chat_id);
-
     ctx.telegram.sendMessage(ctx.chat.id,
 "Выберите действие",
     {
