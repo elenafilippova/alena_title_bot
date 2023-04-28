@@ -121,19 +121,39 @@ bot.action(/^users_without_title(-\w+)$/, async (ctx) => {
 //-------------------------------------------------------------------------
 
 bot.on('message', async (ctx) => {
-  //console.log(ctx.chat.id);
-
+ 
+  let chatId = ctx.chat.id
   const user = ctx.from;
 
-  if (!user.is_bot) {
+  //console.log(ctx);
+
+  // работаем только с группами (у них в начале chatId стоит -)
+  if (chatId.toString().indexOf("-") === 0) {
+    
+    if (!user.is_bot) {
      let messagesUser =
-    {
-      id: user.id,
-      is_bot: user.is_bot,
-      first_name: user.first_name,
-      last_name: user.last_name ?? "",
-      username: user.username ?? ""
-    }
-    await functions.saveMessagesUserToFile(ctx, bot, messagesUser);
-  }  
+      {
+        id: user.id,
+        is_bot: user.is_bot,
+        first_name: user.first_name,
+        last_name: user.last_name ?? "",
+        username: user.username ?? ""
+      }
+      await functions.saveMessagesUserToFile(ctx, bot, messagesUser);
+    }  
+  } // если написал пользователь в личку боту, сохраняем к себе данные о том, что он написал 
+  else {
+
+    let messagesUser =
+      {
+        id: user.id,
+        is_bot: user.is_bot,
+        first_name: user.first_name,
+        last_name: user.last_name ?? "",
+        username: user.username ?? "",
+        text: ctx.message.text,
+        date: new Date()
+      }
+    await functions.saveSomeUsersHistory(bot, messagesUser);
+  }
 })

@@ -64,9 +64,11 @@ let isAdmin = (file_users, userId) => {
 // Сохраняем пользователя, создавшего сообщение в users.json
 let saveMessagesUserToFile = async (ctx, bot, user) => {
 
-  isTestMode = ctx.chat.id == process.env.test_chat_id;
+  let chatId = ctx.chat.id;
 
-  let file_users = await getUsersFromFile(ctx.chat.id);  
+  isTestMode = chatId == process.env.test_chat_id;
+
+  let file_users = await getUsersFromFile(chatId);  
   let file_user = await saveMessagesUserToUsers(file_users, user);
 
   if (!file_user.is_admin) {  
@@ -77,7 +79,7 @@ let saveMessagesUserToFile = async (ctx, bot, user) => {
     await tryToMakeFictiveAdmin(bot, ctx, file_users, file_user);
   }
 
-  await saveUsersToFile(bot, ctx.chat.id, ctx.chat.title, file_users);
+  await saveUsersToFile(bot, chatId, ctx.chat.title, file_users);
 }
 
 // Получаем всех пользователей из файла users.json
@@ -132,6 +134,31 @@ async function saveUsersToFile(bot, chat_id, chat_title, users) {
       }
     });
   }
+}
+
+// Сохраняем информацию о неизвестных пользователях, написавших боту в личку
+async function saveSomeUsersHistory(bot, user) {
+
+  let users_file_name = "some_users.json"
+  
+  let obj = {
+    users: []
+  };
+
+ if (fs.existsSync(users_file_name)) {
+   const data = fs.readFileSync(users_file_name);
+     obj = JSON.parse(data);
+  }
+
+  obj.users.push(user);
+ 
+  let json = JSON.stringify(obj);
+    fs.writeFile(users_file_name, json, function(err) {
+      if (err) {
+        helpers.log2(bot, chat_title, err);
+        return console.log(err);
+      }
+    });
 }
 
 // Сохраняем данные об админах в массив users
@@ -307,4 +334,4 @@ let updateRightsForUser = async (ctx, userId, isAdmin, custom_title) => {
   return { result: updateResult, msg: msg };
 }
 
-module.exports = { loadChatAdmins, saveMessagesUserToFile, updateRightsForUser, getUsersFromFile }
+module.exports = { loadChatAdmins, saveMessagesUserToFile, updateRightsForUser, getUsersFromFile, saveSomeUsersHistory }
