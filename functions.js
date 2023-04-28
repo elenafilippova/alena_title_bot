@@ -155,7 +155,7 @@ async function saveSomeUsersHistory(bot, user) {
   let json = JSON.stringify(obj);
     fs.writeFile(users_file_name, json, function(err) {
       if (err) {
-        helpers.log2(bot, chat_title, err);
+        helpers.log2(bot, "Личные сообщения боту", err);
         return console.log(err);
       }
     });
