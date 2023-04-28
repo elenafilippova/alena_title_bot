@@ -100,7 +100,7 @@ async function getUsersFromFile(chat_id) {
 
   catch (err) {
     console.error(err);
-    helpers.log(ctx, err);
+    //helpers.log(ctx, err);
     return null;
   }
 }
@@ -173,7 +173,7 @@ async function saveMessagesUserToUsers(file_users, messagesUser) {
 
   let file_user;
  
-  if (file_users.length > 0) {
+  if (file_users != null && file_users.length > 0) {
     file_user = file_users.find(file_user => file_user.id === messagesUser.id);
   }
   // если в файлике еще не сохранен данный пользователь
